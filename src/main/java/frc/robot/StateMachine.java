@@ -31,13 +31,13 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import edu.wpi.first.units.measure.Distance;
 
-import frc.robot.subsystems.YAMSIntakePivot;
-import frc.robot.subsystems.YAMSIntakePivot.intakeConstants;
+import frc.robot.subsystems.ClimbS;
+import frc.robot.subsystems.ClimbS.intakeConstants;
 
 public class StateMachine {
     // TODO: add logging/simulation for states
 
-    public final YAMSIntakePivot yIntakePivot = new YAMSIntakePivot();
+    public final ClimbS yIntakePivot = new ClimbS();
 
     public enum RobotState {
         // Todo: add all states as in button mapping doc

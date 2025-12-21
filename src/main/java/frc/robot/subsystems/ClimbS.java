@@ -39,15 +39,19 @@ import com.ctre.phoenix6.hardware.TalonFX;
 
 import frc.robot.StateMachine;
 import frc.robot.generated.TunerConstants;
+import yams.gearing.GearBox;
+import yams.gearing.MechanismGearing;
 import yams.mechanisms.SmartMechanism;
 import yams.motorcontrollers.remote.TalonFXWrapper;
 
-public class YAMSIntakePivot extends SubsystemBase {
-  public class intakeConstants {
-    public static final Angle SOME_ANGLE = Degrees.of(20);
-    public static final Angle DOWN_ANGLE = Degrees.of(-35);
-    public static final Angle L1_ANGLE = Degrees.of(65);
-    public static final Angle HANDOFF_ANGLE = Degrees.of(135);
+public class ClimbS extends SubsystemBase {
+  public class climbConstants {
+    public static final Angle STOW_LIMIT = Degrees.of(80);
+    public static final Angle DEPLOY_LIMIT = Degrees.of(10);
+    public static final double PIV_MOTOR_CURRENT_LIMIT = 60;
+    public static final int MOTOR_ID = 11;
+
+
     public static final double KP = 18;
     public static final double KI = 0;
     public static final double KD = 0.2;
@@ -57,58 +61,55 @@ public class YAMSIntakePivot extends SubsystemBase {
     public static final double KA = 0;
     public static final double VELOCITY = 458;
     public static final double ACCELERATION = 688;
-    public static final int MOTOR_ID = 40;
-    public static final double STATOR_CURRENT_LIMIT = 120;
     public static final double MOI = 0.1055457256;
   }
 
   private SmartMotorControllerConfig smcConfig = new SmartMotorControllerConfig(this)
       .withControlMode(ControlMode.CLOSED_LOOP)
       // Feedback Constants (PID Constants)
-      .withClosedLoopController(intakeConstants.KP, intakeConstants.KI, intakeConstants.KD,
-          DegreesPerSecond.of(intakeConstants.VELOCITY), DegreesPerSecondPerSecond.of(intakeConstants.ACCELERATION))
-      // can be seperate for sim:
-      .withSimClosedLoopController(intakeConstants.KP, intakeConstants.KI, intakeConstants.KD,
-          DegreesPerSecond.of(intakeConstants.VELOCITY),
-          DegreesPerSecondPerSecond.of(intakeConstants.ACCELERATION))
+      .withClosedLoopController(climbConstants.KP, climbConstants.KI, climbConstants.KD,
+          DegreesPerSecond.of(climbConstants.VELOCITY), DegreesPerSecondPerSecond.of(climbConstants.ACCELERATION))
+      .withSimClosedLoopController(climbConstants.KP, climbConstants.KI, climbConstants.KD,
+          DegreesPerSecond.of(climbConstants.VELOCITY),
+          DegreesPerSecondPerSecond.of(climbConstants.ACCELERATION))
       // Feedforward Constants
       .withFeedforward(
-          new ArmFeedforward(intakeConstants.KS, intakeConstants.KG, intakeConstants.KV, intakeConstants.KA))
+          new ArmFeedforward(climbConstants.KS, climbConstants.KG, climbConstants.KV, climbConstants.KA))
       .withSimFeedforward(
-          new ArmFeedforward(intakeConstants.KS, intakeConstants.KG, intakeConstants.KV, intakeConstants.KA))
+          new ArmFeedforward(climbConstants.KS, climbConstants.KG, climbConstants.KV, climbConstants.KA))
       // Telemetry name and verbosity level
-      .withTelemetry("ArmMotor", TelemetryVerbosity.HIGH)
+      .withTelemetry("ClimbMotor", TelemetryVerbosity.HIGH)
       // Gearing from the motor rotor to final shaft.
       // In this example gearbox(3,4) is the same as gearbox("3:1","4:1") which
       // corresponds to the gearbox attached to your motor.
-      .withGearing(SmartMechanism.gearing(SmartMechanism.gearbox(12.5, 1)))
+      .withGearing(new MechanismGearing(GearBox.fromReductionStages(100,1)))
       .withMotorInverted(false)
       .withIdleMode(MotorMode.BRAKE)
-      .withStatorCurrentLimit(Amps.of(intakeConstants.STATOR_CURRENT_LIMIT));
+      .withStatorCurrentLimit(Amps.of(climbConstants.PIV_MOTOR_CURRENT_LIMIT));
 
   // Vendor motor controller object
-  private TalonFX intakeMotor = new TalonFX(intakeConstants.MOTOR_ID, TunerConstants.kCANBus2);
+  private TalonFX pivotMotor = new TalonFX(climbConstants.MOTOR_ID, TunerConstants.kCANBus2);
 
   // Create our SmartMotorController from our Spark and config with the NEO.
-  private SmartMotorController IntakeSMC = new TalonFXWrapper(intakeMotor, DCMotor.getFalcon500(1), smcConfig);
+  private SmartMotorController IntakeSMC = new TalonFXWrapper(pivotMotor, DCMotor.getKrakenX60(1), smcConfig);
 
   private final MechanismPositionConfig robotToMechanism = new MechanismPositionConfig()
-      .withRelativePosition(new Translation3d(Meters.of(0.1), Meters.of(0), Meters.of(0.15)));
+      .withRelativePosition(new Translation3d(Meters.of(0.3683), Meters.of(0), Meters.of(0)));
 
   private ArmConfig armCfg = new ArmConfig(IntakeSMC)
       // Soft limit is applied to the SmartMotorControllers PID
 
-      .withHardLimit(Degrees.of(-25), Degrees.of(141))
+      .withHardLimit(climbConstants.STOW_LIMIT, climbConstants.DEPLOY_LIMIT)
       // Starting position is where your arm starts
-      .withStartingPosition(Degrees.of(141))
+      .withStartingPosition(climbConstants.STOW_LIMIT)
 
       // Length and mass of your arm for sim.
-      .withLength(Feet.of((14 / 12)))
+      .withLength(Feet.of((17.625 / 12)))
 
-      .withMOI(intakeConstants.MOI)
+      .withMOI(climbConstants.MOI)
 
       // Telemetry name and verbosity for the arm.
-      .withTelemetry("Intake", TelemetryVerbosity.HIGH)
+      .withTelemetry("Climb", TelemetryVerbosity.HIGH)
       .withMechanismPositionConfig(robotToMechanism);
 
   // Arm Mechanism
@@ -148,7 +149,7 @@ public class YAMSIntakePivot extends SubsystemBase {
     return arm.getAngle();
   }
 
-  public Command goToAngle() {
-    return run(() -> arm.setAngle(intakeConstants.SOME_ANGLE));
+  public Command climbDeploy() {
+    return run(() -> arm.setAngle(climbConstants.DEPLOY_LIMIT));
   }
 }

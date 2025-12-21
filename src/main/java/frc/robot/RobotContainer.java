@@ -35,7 +35,7 @@ import choreo.auto.AutoFactory;
 import frc.robot.Autos;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.YAMSIntakePivot;
+import frc.robot.subsystems.ClimbS;
 import frc.robot.StateMachine;
 
 public class RobotContainer {
@@ -58,7 +58,7 @@ public class RobotContainer {
 
     // public final IntakePivotS intakePivot = new IntakePivotS();
 
-    public final YAMSIntakePivot yIntakePivot = new YAMSIntakePivot();
+    public final ClimbS yIntakePivot = new ClimbS();
 
     private final AutoFactory autoFactory;
     private Mechanism2d VISUALIZER;

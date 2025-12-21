@@ -57,17 +57,17 @@ import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.YAMSIntakePivot;
+import frc.robot.subsystems.ClimbS;
 
 public class Autos {
     private final AutoFactory m_factory;
     private final RobotContainer m_container;
     protected final CommandSwerveDrivetrain m_drivebase;
-    protected final YAMSIntakePivot m_intakepiv;
+    protected final ClimbS m_intakepiv;
     private final StateMachine stateMachine = new StateMachine();
     private final double SCORE_WAIT = 0.875;
 
-    public Autos(CommandSwerveDrivetrain drivebase, YAMSIntakePivot intakepiv,
+    public Autos(CommandSwerveDrivetrain drivebase, ClimbS intakepiv,
             AutoFactory factory, RobotContainer container, StateMachine stateMachine) {
         m_drivebase = drivebase; // need
         m_intakepiv = intakepiv;
