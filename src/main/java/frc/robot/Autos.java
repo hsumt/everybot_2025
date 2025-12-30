@@ -58,21 +58,28 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.ClimbS;
+import frc.robot.subsystems.IntRollersS;
+import frc.robot.subsystems.IntPivotS;
 
 public class Autos {
     private final AutoFactory m_factory;
     private final RobotContainer m_container;
     protected final CommandSwerveDrivetrain m_drivebase;
-    protected final ClimbS m_intakepiv;
-    private final StateMachine stateMachine = new StateMachine();
+    protected final IntPivotS m_ipiv;
+    protected final IntRollersS m_iroll;
+    protected final ClimbS m_climb;
+    private final StateMachine m_StateMachine;
     private final double SCORE_WAIT = 0.875;
 
-    public Autos(CommandSwerveDrivetrain drivebase, ClimbS intakepiv,
+    public Autos(CommandSwerveDrivetrain drivebase, IntPivotS ipiv, IntRollersS iroll, ClimbS climb,
             AutoFactory factory, RobotContainer container, StateMachine stateMachine) {
         m_drivebase = drivebase; // need
-        m_intakepiv = intakepiv;
+        m_ipiv = ipiv;
+        m_iroll = iroll;
+        m_climb = climb;
         m_factory = factory;
         m_container = container;
+        m_StateMachine = stateMachine;
 
         container.m_chooser.addRoutine(simpleAutoName, this::simpleAuto);
         container.m_chooser.addRoutine(backsideL1Name, this::backsideL1);
@@ -101,7 +108,7 @@ public class Autos {
                                 .andThen(waitSeconds(SCORE_WAIT))
                                 .andThen(postScoreIntake.cmd())));
 
-        firstScore.atTimeBeforeEnd(0.2).onTrue(stateMachine.prepL1());
+        firstScore.atTimeBeforeEnd(0.2).onTrue(m_StateMachine.CoralOuttake());
         // firstScore.doneFor(0.1).onTrue(null/*stateMachine.scoreL1());
         // firstScore.atTimeBeforeEnd(0.1).onTrue(stateMachine.intakeCoral());
         return routine;

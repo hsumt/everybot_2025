@@ -1,6 +1,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.wpilibj2.command.Commands.waitSeconds;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -29,52 +30,76 @@ import choreo.auto.AutoFactory;
 import frc.robot.Autos;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.IntPivotS;
+import frc.robot.subsystems.IntRollersS;
+import frc.robot.subsystems.IntRollersS.rollerConstants;
 import edu.wpi.first.units.measure.Distance;
 
 import frc.robot.subsystems.ClimbS;
-import frc.robot.subsystems.ClimbS.intakeConstants;
+import frc.robot.subsystems.ClimbS.climbConstants;
+import frc.robot.subsystems.IntPivotS.intakeConstants;;
 
 public class StateMachine {
     // TODO: add logging/simulation for states
 
-    public final ClimbS yIntakePivot = new ClimbS();
+    public final ClimbS climbPivot;
+    public final IntPivotS intPivot;
+    public final IntRollersS intRollers;
+    public final CommandSwerveDrivetrain drivetrain;
+    private Autos autos;
 
     public enum RobotState {
         // Todo: add all states as in button mapping doc
-        CORAL_INTAKING,
-        HANDOFF,
-        L1_PRE_SCORE,
-        L2_PRE_SCORE,
-        L3_PRE_SCORE,
-        L4_PRE_SCORE,
-        INTAKING_ALGAE_GROUND,
-        INTAKING_ALGAE_REEF,
-        ALGAE_STOW,
-        BARGE_PREP
+        CORAL_PRESCORE,
+        ALGAE_PRESCORE,
+        DEFAULT
 
     }
 
-    public RobotState currentState = RobotState.HANDOFF;
-
+    public RobotState currentState = RobotState.DEFAULT;
+    public StateMachine(ClimbS climbPivot, IntPivotS intPivot, IntRollersS intRollers, CommandSwerveDrivetrain drivetrain) {
+        this.climbPivot = climbPivot;
+        this.intPivot = intPivot;
+        this.intRollers = intRollers;
+        this.drivetrain = drivetrain;
+        this.autos = null;
+    }
     public Command setState(RobotState newState) {
         return new InstantCommand(() -> currentState = newState);
     }
-
-    // Functions below:
-    // Todo: add command that combines intakeCoral and stowCoral, update states
-
-    public Command stowCoral() {
-        return Commands.sequence(setState(RobotState.HANDOFF),
-                yIntakePivot.setAngle(intakeConstants.HANDOFF_ANGLE));
+    public void setAutos(Autos autos) {
+        this.autos = autos;
+    }
+    public Command AlgaeIntake() {
+        return intRollers.setVoltage(rollerConstants.ALG_VOLTAGE_IN);
+    }
+    public Command AlgaeOuttake() {
+        return intRollers.setVoltage(rollerConstants.ALG_VOLTAGE_OUT);
+    }
+    public Command ArmDown() {
+        return intPivot.setAngle(intakeConstants.DEPLOY_LIMIT);
+    }
+    public Command ArmUp() {
+        return intPivot.setAngle(intakeConstants.STOW_LIMIT);
+    }
+    public Command ClimbDeploy() {
+        return climbPivot.setAngle(climbConstants.DEPLOY_LIMIT);
+    }
+    public Command ClimbStow() {
+        return climbPivot.setAngle(climbConstants.STOW_LIMIT);
+    }
+    public Command CoralOuttake() {
+        return intRollers.setVoltage(rollerConstants.COR_VOLTAGE_OUT);
+    }
+    public Command CoralStack() {
+        return intRollers.setVoltage(rollerConstants.COR_VOLTAGE_OUT_STACK);
     }
 
-    // Commands below:
-    // TODO: add handoff sequence
-
-    public Command prepL1() {
-        return Commands.sequence(setState(RobotState.L1_PRE_SCORE),
-                yIntakePivot.setAngle(intakeConstants.L1_ANGLE)
-
-        );
+    public Command AlgaeScore() {
+        return Commands.race(AlgaeOuttake(), waitSeconds(0.5).andThen(ArmDown()));
     }
+    public Command AlgaeObtain() {
+        return Commands.parallel(ArmDown(), AlgaeIntake());
+    }
+
 }

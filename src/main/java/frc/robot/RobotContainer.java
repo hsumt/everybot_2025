@@ -35,6 +35,8 @@ import choreo.auto.AutoFactory;
 import frc.robot.Autos;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.IntPivotS;
+import frc.robot.subsystems.IntRollersS;
 import frc.robot.subsystems.ClimbS;
 import frc.robot.StateMachine;
 
@@ -58,13 +60,15 @@ public class RobotContainer {
 
     // public final IntakePivotS intakePivot = new IntakePivotS();
 
-    public final ClimbS yIntakePivot = new ClimbS();
+    public final ClimbS climbPivot = new ClimbS();
+    public final IntPivotS intPivot = new IntPivotS();
+    public final IntRollersS intRollers = new IntRollersS();
 
     private final AutoFactory autoFactory;
     private Mechanism2d VISUALIZER;
     private final Autos autoRoutines;
     public final AutoChooser m_chooser = new AutoChooser();
-    private final StateMachine stateMachine = new StateMachine();
+    private final StateMachine stateMachine = new StateMachine(climbPivot, intPivot, intRollers, drivetrain);
 
     public RobotContainer() {
 
@@ -75,7 +79,7 @@ public class RobotContainer {
         SmartDashboard.putData("Visualzer", VISUALIZER);
 
         autoFactory = drivetrain.createAutoFactory();
-        autoRoutines = new Autos(drivetrain, yIntakePivot, autoFactory, this, stateMachine);
+        autoRoutines = new Autos(drivetrain, intPivot, intRollers, climbPivot, autoFactory, this, stateMachine);
         SmartDashboard.putData("Auto Mode", m_chooser);
 
     }
@@ -86,27 +90,30 @@ public class RobotContainer {
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
-                // Drivetrain will execute this command periodically
-                drivetrain.applyRequest(() -> drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with
-                                                                                                   // negative Y
-                                                                                                   // (forward)
-                        .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                        .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with
-                                                                                    // negative X (left)
-                ));
+    drivetrain.applyRequest(() -> {
+        if (!edu.wpi.first.wpilibj.DriverStation.isEnabled()) {
+            return new SwerveRequest.Idle();
+        }
+        return drive
+            .withVelocityX(-joystick.getLeftY() * MaxSpeed)
+            .withVelocityY(-joystick.getLeftX() * MaxSpeed)
+            .withRotationalRate(-joystick.getRightX() * MaxAngularRate);
+    })
+);
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
-        final var idle = new SwerveRequest.Idle();
-        RobotModeTriggers.disabled().whileTrue(
-                drivetrain.applyRequest(() -> idle).ignoringDisable(true));
+       
         /*
          * joystick.a().onTrue(
          * stateMachine.intakeCoral());
          */
         drivetrain.registerTelemetry(logger::telemeterize);
         // Assigns button b on a zbox controller to the command "goToAngle".
-        joystick.b().onTrue(yIntakePivot.goToAngle());
+        joystick.leftBumper().onTrue(stateMachine.AlgaeObtain());
+        joystick.leftTrigger().onTrue(stateMachine.AlgaeScore());
+        joystick.rightBumper().onTrue(stateMachine.CoralStack());
+        joystick.rightTrigger().onTrue(stateMachine.CoralOuttake());
 
     }
 

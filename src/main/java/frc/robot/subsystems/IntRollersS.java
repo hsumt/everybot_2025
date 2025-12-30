@@ -113,7 +113,7 @@ public class IntRollersS extends SubsystemBase {
   public AngularVelocity getVelocity() {
     return roller.getSpeed();
   }
-  public Command runRoller(AngularVelocity speed) {
-    return run(() -> roller.setSpeed(speed));
+  public Command setVoltage(Voltage volts) {
+    return run(() -> rollerMotor.setVoltage(volts.in(Volts)));
   }
 }

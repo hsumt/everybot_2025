@@ -91,12 +91,12 @@ public class ClimbS extends SubsystemBase {
   private TalonFX pivotMotor = new TalonFX(climbConstants.MOTOR_ID, TunerConstants.kCANBus2);
 
   // Create our SmartMotorController from our Spark and config with the NEO.
-  private SmartMotorController IntakeSMC = new TalonFXWrapper(pivotMotor, DCMotor.getKrakenX60(1), smcConfig);
+  private SmartMotorController ClimbSMC = new TalonFXWrapper(pivotMotor, DCMotor.getKrakenX60(1), smcConfig);
 
   private final MechanismPositionConfig robotToMechanism = new MechanismPositionConfig()
-      .withRelativePosition(new Translation3d(Meters.of(0.3683), Meters.of(0), Meters.of(0)));
+      .withRelativePosition(new Translation3d(Meters.of(-0.3683), Meters.of(0), Meters.of(0)));
 
-  private ArmConfig armCfg = new ArmConfig(IntakeSMC)
+  private ArmConfig armCfg = new ArmConfig(ClimbSMC)
       // Soft limit is applied to the SmartMotorControllers PID
 
       .withHardLimit(climbConstants.STOW_LIMIT, climbConstants.DEPLOY_LIMIT)
@@ -151,5 +151,8 @@ public class ClimbS extends SubsystemBase {
 
   public Command climbDeploy() {
     return run(() -> arm.setAngle(climbConstants.DEPLOY_LIMIT));
+  }
+  public Command climbStow() {
+    return run(() -> arm.setAngle(climbConstants.STOW_LIMIT));
   }
 }
